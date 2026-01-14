@@ -1,0 +1,43 @@
+name: React CI/CD + Supabase Keep Alive
+
+on:
+  push:
+    branches: ["main"]
+
+  pull_request:
+    branches: ["main"]
+
+  schedule:
+    - cron: "*/10 * * * *"  # every 10 minutes (UTC)
+
+  workflow_dispatch:
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Keep Supabase Alive
+        run: |
+          curl -s -o /dev/null \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/"
+        env:
+          SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_PUBLISHABLE_DEFAULT_KEY }}
