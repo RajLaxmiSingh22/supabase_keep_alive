@@ -7,13 +7,16 @@ on:
   pull_request:
     branches: ["main"]
 
+  # Weekly schedule (GitHub cron is UTC)
   schedule:
-    - cron: "*/10 * * * *"  # every 10 minutes (UTC)
+    - cron: "0 9 * * 1" # Every Monday 09:00 UTC
 
   workflow_dispatch:
 
 jobs:
-  pipeline:
+  ci:
+    # Run CI only for push/PR/manual (NOT scheduled keep-alive)
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
     steps:
@@ -32,12 +35,23 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Keep Supabase Alive
-        run: |
-          curl -s -o /dev/null \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            "$SUPABASE_URL/rest/v1/"
+  keep-alive:
+    # Run keep-alive only for schedule + manual trigger
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ping Supabase (weekly keep-alive)
+        run: node scripts/keepSupabaseAlive.js
         env:
+          # Use the SAME secret name you already created
           SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_PUBLISHABLE_DEFAULT_KEY }}
