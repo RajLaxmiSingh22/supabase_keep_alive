@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
 import "./App.css";
@@ -8,16 +9,14 @@ export default function App() {
   useEffect(() => {
     const check = async () => {
       try {
-        // Lightweight call (no table required)
-        // You can also do: await supabase.auth.getSession();
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getUser(); // real request
 
         if (error) {
           setStatus("❌ Supabase error: " + error.message);
           return;
         }
 
-        setStatus("✅ Supabase connected (session checked)");
+        setStatus("✅ Supabase connected (auth request done)");
       } catch (e) {
         setStatus("❌ Error: " + e.message);
       }

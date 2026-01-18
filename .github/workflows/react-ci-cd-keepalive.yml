@@ -7,15 +7,14 @@ on:
   pull_request:
     branches: ["main"]
 
-  # Weekly schedule (GitHub cron is UTC)
+  # 5 days a week (Mon-Fri) - GitHub cron is UTC
   schedule:
-    - cron: "0 9 * * 1" # Every Monday 09:00 UTC
+    - cron: "0 9 * * 1-5"
 
   workflow_dispatch:
 
 jobs:
   ci:
-    # Run CI only for push/PR/manual (NOT scheduled keep-alive)
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
@@ -36,7 +35,6 @@ jobs:
         run: npm run build
 
   keep-alive:
-    # Run keep-alive only for schedule + manual trigger
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
@@ -49,9 +47,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Ping Supabase (weekly keep-alive)
+      - name: Ping Supabase (keep-alive)
         run: node scripts/keepSupabaseAlive.js
         env:
-          # Use the SAME secret name you already created
           SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_PUBLISHABLE_DEFAULT_KEY }}
+          SUPABASE_PUBLISHABLE_DEFAULT_KEY: ${{ secrets.REACT_APP_SUPABASE_PUBLISHABLE_DEFAULT_KEY }}

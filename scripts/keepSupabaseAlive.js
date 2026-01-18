@@ -1,17 +1,6 @@
-/**
- * Weekly Supabase keep-alive script
- * Runs in GitHub Actions (Node 22)
- *
- * Pings:
- *   GET <SUPABASE_URL>/auth/v1/health
- *
- * Why this endpoint?
- * - lightweight
- * - reliable
- * - shows in Supabase API Gateway logs
- */
-
-const SUPABASE_URL = process.env.SUPABASE_URL;
+// scripts/keepSupabaseAlive.js
+const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_PUBLISHABLE_DEFAULT_KEY; // optional
 
 if (!SUPABASE_URL) {
   console.error("❌ Missing env: SUPABASE_URL");
@@ -23,7 +12,13 @@ const url = `${base}/auth/v1/health`;
 
 async function main() {
   try {
-    const res = await fetch(url, { method: "GET" });
+    const headers = {};
+    if (SUPABASE_ANON_KEY) {
+      headers.apikey = SUPABASE_ANON_KEY;
+      headers.Authorization = `Bearer ${SUPABASE_ANON_KEY}`;
+    }
+
+    const res = await fetch(url, { method: "GET", headers });
     const body = await res.text().catch(() => "");
 
     console.log(`🔄 Ping URL: ${url}`);
@@ -42,4 +37,3 @@ async function main() {
 }
 
 main();
-
